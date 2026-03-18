@@ -520,6 +520,111 @@
     }
     .dot.done { background: var(--gold); transform: scale(1.2); }
 
+    /* ─── Shuffle Overlay ─── */
+    .shuffle-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 999;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .shuffle-overlay.active { pointer-events: all; }
+
+    /* Deck stack shown during shuffle */
+    .deck-stage {
+      position: relative;
+      width: 160px;
+      height: 280px;
+    }
+
+    /* Flying cards during shuffle */
+    .fly-card {
+      position: fixed;
+      width: clamp(80px, 15vw, 120px);
+      height: clamp(140px, 26vw, 210px);
+      border-radius: 14px;
+      background: linear-gradient(145deg, #1c1a32 0%, #131224 100%);
+      border: 2px solid rgba(232,201,106,0.35);
+      display: flex; align-items: center; justify-content: center;
+      font-size: clamp(22px, 5vw, 34px);
+      pointer-events: none;
+      z-index: 1000;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(232,201,106,0.12);
+      will-change: transform, opacity;
+      backface-visibility: hidden;
+    }
+    [data-theme="light"] .fly-card {
+      background: linear-gradient(145deg, #2d2850 0%, #1e1b40 100%);
+    }
+
+    /* Backdrop blur during shuffle */
+    .shuffle-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0);
+      z-index: 998;
+      transition: background 0.3s;
+      pointer-events: none;
+    }
+    .shuffle-backdrop.active { background: rgba(0,0,0,0.55); pointer-events: all; }
+    [data-theme="light"] .shuffle-backdrop.active { background: rgba(0,0,0,0.3); }
+
+    /* Shuffle status label */
+    .shuffle-status {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%) translateY(20px);
+      background: rgba(232,201,106,0.12);
+      border: 1px solid rgba(232,201,106,0.3);
+      color: var(--gold);
+      font-size: 13px;
+      letter-spacing: 3px;
+      padding: 10px 28px;
+      border-radius: 30px;
+      backdrop-filter: blur(12px);
+      z-index: 1001;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      white-space: nowrap;
+    }
+    .shuffle-status.visible {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* Cards deal-in animation */
+    @keyframes card-deal-in {
+      0%   { opacity: 0; transform: translateY(-60px) scale(0.8) rotateX(25deg); }
+      60%  { opacity: 1; transform: translateY(6px) scale(1.02) rotateX(0deg); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
+    }
+    .spread-slot {
+      opacity: 0;
+      animation: none;
+    }
+    .spread-slot.deal-in {
+      animation: card-deal-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+    }
+
+    /* Button shimmer during animation */
+    .btn-primary.shuffling {
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    /* Particle burst */
+    .particle {
+      position: fixed;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 1002;
+      will-change: transform, opacity;
+    }
+
     /* ─── Responsive ─── */
     @media (max-width: 520px) {
       .spread-container { gap: 10px; }
@@ -575,7 +680,7 @@
 
   <!-- Controls -->
   <div class="controls" style="margin-top:28px;">
-    <button class="btn btn-primary" onclick="shuffleAndReset()">
+    <button class="btn btn-primary" id="shuffleBtn" onclick="shuffleAndReset()">
       🔮 重新洗牌
     </button>
     <button class="btn btn-secondary" onclick="revealAll()">
@@ -592,196 +697,269 @@
 
 </div>
 
+<!-- Shuffle Backdrop & Status (outside .page, fixed) -->
+<div class="shuffle-backdrop" id="shuffleBackdrop"></div>
+<div class="shuffle-status" id="shuffleStatus">正在洗牌...</div>
+
 <script>
-  /* ─── Data ─── */
-  const majors = [
-    { name:"愚者",   symbol:"🌟", desc:"新的開始，純真無畏地踏入未知。" },
-    { name:"魔術師", symbol:"🌙", desc:"意志與技能的完美融合，掌握命運。" },
-    { name:"女祭司", symbol:"🔮", desc:"直覺與神秘智慧，守護內在真相。" },
-    { name:"皇后",   symbol:"🌿", desc:"豐盛、創造力與母性的溫柔力量。" },
-    { name:"皇帝",   symbol:"⚡", desc:"權威與秩序，以意志建立穩固基礎。" },
-    { name:"教皇",   symbol:"✝️", desc:"精神指引，尋求傳統智慧的庇護。" },
-    { name:"戀人",   symbol:"💫", desc:"重要抉擇，關於愛與價值觀的考驗。" },
-    { name:"戰車",   symbol:"🏆", desc:"意志力驅動勝利，克服重重阻礙。" },
-    { name:"力量",   symbol:"🦁", desc:"溫柔的內在力量勝過野蠻的外力。" },
-    { name:"隱士",   symbol:"🕯️", desc:"獨自尋求智慧，在靜默中找到答案。" },
-    { name:"命運之輪", symbol:"☸️", desc:"循環不息，命運的轉折即將到來。" },
-    { name:"正義",   symbol:"⚖️", desc:"因果平衡，公正的裁決將被揭示。" },
-    { name:"倒吊人", symbol:"🌊", desc:"放下執著，從不同角度看待問題。" },
-    { name:"死神",   symbol:"🥀", desc:"轉化與結束，為新生命清出空間。" },
-    { name:"節制",   symbol:"🌈", desc:"耐心與調和，在流動中尋找平衡。" },
-    { name:"惡魔",   symbol:"🔗", desc:"物質束縛，是時候打破自我的枷鎖。" },
-    { name:"高塔",   symbol:"⚡", desc:"突如其來的衝擊，舊結構的崩塌。" },
-    { name:"星星",   symbol:"⭐", desc:"希望的曙光，療癒與靈感的降臨。" },
-    { name:"月亮",   symbol:"🌕", desc:"幻象與恐懼，潛意識的深層呼喚。" },
-    { name:"太陽",   symbol:"☀️", desc:"喜悅與成功，光明照耀每個角落。" },
-    { name:"審判",   symbol:"🎺", desc:"覺醒與召喚，過去的反思帶來解脫。" },
-    { name:"世界",   symbol:"🌍", desc:"圓滿完成，整合一切後的豐盛境界。" }
-  ];
-  const suits = [
-    { name:"權杖", symbol:"🔥", desc:"熱情與行動力的具體展現。" },
-    { name:"聖杯", symbol:"💧", desc:"情感、直覺與深層關係的流動。" },
-    { name:"寶劍", symbol:"💨", desc:"思想、溝通與挑戰的銳利刀鋒。" },
-    { name:"錢幣", symbol:"🌱", desc:"物質、財富與務實行動的根基。" }
-  ];
-  const ranks = ["Ace","2","3","4","5","6","7","8","9","10","侍者","騎士","皇后","國王"];
+  (function() {
+    /* ─── Data ─── */
+    const majors = [
+      { name:"愚者",   symbol:"🌟", desc:"新的開始，純真無畏地踏入未知。" },
+      { name:"魔術師", symbol:"🌙", desc:"意志與技能的完美融合，掌握命運。" },
+      { name:"女祭司", symbol:"🔮", desc:"直覺與神秘智慧，守護內在真相。" },
+      { name:"皇后",   symbol:"🌿", desc:"豐盛、創造力與母性的溫柔力量。" },
+      { name:"皇帝",   symbol:"⚡", desc:"權威與秩序，以意志建立穩固基礎。" },
+      { name:"教皇",   symbol:"✝️", desc:"精神指引，尋求傳統智慧的庇護。" },
+      { name:"戀人",   symbol:"💫", desc:"重要抉擇，關於愛與價值觀的考驗。" },
+      { name:"戰車",   symbol:"🏆", desc:"意志力驅動勝利，克服重重阻礙。" },
+      { name:"力量",   symbol:"🦁", desc:"溫柔的內在力量勝過野蠻的外力。" },
+      { name:"隱士",   symbol:"🕯️", desc:"獨自尋求智慧，在靜默中找到答案。" },
+      { name:"命運之輪", symbol:"☸️", desc:"循環不息，命運的轉折即將到來。" },
+      { name:"正義",   symbol:"⚖️", desc:"因果平衡，公正的裁決將被揭示。" },
+      { name:"倒吊人", symbol:"🌊", desc:"放下執著，從不同角度看待問題。" },
+      { name:"死神",   symbol:"🥀", desc:"轉化與結束，為新生命清出空間。" },
+      { name:"節制",   symbol:"🌈", desc:"耐心與調和，在流動中尋找平衡。" },
+      { name:"惡魔",   symbol:"🔗", desc:"物質束縛，是時候打破自我的枷鎖。" },
+      { name:"高塔",   symbol:"⚡", desc:"突如其來的衝擊，舊結構的崩塌。" },
+      { name:"星星",   symbol:"⭐", desc:"希望的曙光，療癒與靈感的降臨。" },
+      { name:"月亮",   symbol:"🌕", desc:"幻象與恐懼，潛意識的深層呼喚。" },
+      { name:"太陽",   symbol:"☀️", desc:"喜悅與成功，光明照耀每個角落。" },
+      { name:"審判",   symbol:"🎺", desc:"覺醒與召喚，過去的反思帶來解脫。" },
+      { name:"世界",   symbol:"🌍", desc:"圓滿完成，整合一切後的豐盛境界。" }
+    ];
+    const suits = [
+      { name:"權杖", symbol:"🔥", desc:"熱情與行動力的具體展現。" },
+      { name:"聖杯", symbol:"💧", desc:"情感、直覺與深層關係的流動。" },
+      { name:"寶劍", symbol:"💨", desc:"思想、溝通與挑戰的銳利刀鋒。" },
+      { name:"錢幣", symbol:"🌱", desc:"物質、財富與務實行動的根基。" }
+    ];
+    const ranks = ["Ace","2","3","4","5","6","7","8","9","10","侍者","騎士","皇后","國王"];
 
-  let fullDeck = [], selectedCards = [], flippedStatus = [], currentCount = 3;
-  const positions3 = ["過去", "現在", "未來"];
-  const positions5 = ["根基", "挑戰", "過去", "未來", "結果"];
-  const positions1 = ["今日指引"];
+    let fullDeck = [];
+    let selectedCards = [];
+    let flippedStatus = [];
+    let currentCount = 3;
+    const positions3 = ["過去", "現在", "未來"];
+    const positions5 = ["根基", "挑戰", "過去", "未來", "結果"];
+    const positions1 = ["今日指引"];
 
-  function getPositions(n) {
-    if (n === 3) return positions3;
-    if (n === 5) return positions5;
-    return positions1;
-  }
+    function getPositions(n) {
+      if (n === 3) return positions3;
+      if (n === 5) return positions5;
+      return positions1;
+    }
 
-  function initDeck() {
-    fullDeck = [...majors.map(m => ({ ...m, suit:"大阿爾克那" }))];
-    suits.forEach(s => {
-      ranks.forEach(r => {
-        fullDeck.push({ name:`${r}`, suit:`${s.name}`, symbol: s.symbol, desc: s.desc });
+    function initDeck() {
+      fullDeck = []; // 清空，避免重複累加
+      majors.forEach(m => fullDeck.push({ ...m, suit:"大阿爾克那" }));
+      suits.forEach(s => {
+        ranks.forEach(r => {
+          fullDeck.push({ 
+            name: r, 
+            suit: s.name, 
+            symbol: s.symbol, 
+            desc: s.desc 
+          });
+        });
       });
-    });
-  }
+    }
 
-  function selectSpread(el, count) {
-    document.querySelectorAll('.spread-chip').forEach(c => c.classList.remove('active'));
-    el.classList.add('active');
-    currentCount = count;
-    shuffleAndReset();
-  }
+    // 主題切換
+    window.toggleTheme = function() {
+      const html = document.documentElement;
+      const isDark = html.getAttribute('data-theme') === 'dark';
+      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      document.getElementById('pill-dark').classList.toggle('active', !isDark);
+      document.getElementById('pill-light').classList.toggle('active', isDark);
+    };
 
-  function shuffleAndReset() {
-    initDeck();
-    const shuffled = [...fullDeck].sort(() => Math.random() - 0.5);
-    selectedCards = shuffled.slice(0, currentCount).map(c => ({ ...c, isReversed: Math.random() > 0.55 }));
-    flippedStatus = Array(currentCount).fill(false);
+    // 選擇牌陣
+    window.selectSpread = function(el, count) {
+      document.querySelectorAll('.spread-chip').forEach(c => c.classList.remove('active'));
+      el.classList.add('active');
+      currentCount = count;
+      shuffleAndReset();
+    };
 
-    buildSpread();
-    updateDots();
-    document.getElementById('resultPanel').classList.remove('visible');
-    document.getElementById('tapHint').style.display = 'flex';
-  }
+    // 洗牌 + 重設 (含簡單動畫)
+    window.shuffleAndReset = function() {
+      // 防止重複點擊
+      const btn = document.getElementById('shuffleBtn');
+      if (btn.classList.contains('shuffling')) return;
+      btn.classList.add('shuffling');
 
-  function buildSpread() {
-    const container = document.getElementById('spread');
-    const positions = getPositions(currentCount);
-    container.innerHTML = '';
-    for (let i = 0; i < currentCount; i++) {
-      const slot = document.createElement('div');
-      slot.className = 'spread-slot';
-      slot.innerHTML = `
-        <div class="slot-label-wrap">
-          <div class="slot-num">${i+1}</div>
-          <div class="slot-label">${positions[i]}</div>
-        </div>
-        <div class="tarot-card" onclick="flip(this, ${i})" id="card-${i}">
-          <div class="card-inner" id="inner-${i}">
-            <div class="card-back">
-              <div class="back-design">
-                <div class="back-star">✦</div>
+      // 顯示洗牌動畫元素
+      const backdrop = document.getElementById('shuffleBackdrop');
+      const status = document.getElementById('shuffleStatus');
+      backdrop.classList.add('active');
+      status.classList.add('visible');
+
+      // 延遲執行真正的洗牌，讓動畫出現
+      setTimeout(() => {
+        // 重新建立牌組
+        initDeck();
+        // 隨機選牌 + 隨機正逆位
+        const shuffled = [...fullDeck].sort(() => Math.random() - 0.5);
+        selectedCards = shuffled.slice(0, currentCount).map(c => ({ 
+          ...c, 
+          isReversed: Math.random() > 0.55 
+        }));
+        flippedStatus = Array(currentCount).fill(false);
+
+        // 重繪版面
+        buildSpread();
+        updateDots();
+
+        // 隱藏結果面板
+        document.getElementById('resultPanel').classList.remove('visible');
+        document.getElementById('tapHint').style.display = 'flex';
+
+        // 隱藏洗牌動畫
+        backdrop.classList.remove('active');
+        status.classList.remove('visible');
+        btn.classList.remove('shuffling');
+
+        // 觸發展牌動畫 (為每個slot加入deal-in)
+        setTimeout(() => {
+          document.querySelectorAll('.spread-slot').forEach(slot => {
+            slot.classList.add('deal-in');
+          });
+        }, 20);
+      }, 600); // 動畫持續時間
+    };
+
+    // 建立牌陣DOM
+    function buildSpread() {
+      const container = document.getElementById('spread');
+      const positions = getPositions(currentCount);
+      container.innerHTML = '';
+      for (let i = 0; i < currentCount; i++) {
+        const slot = document.createElement('div');
+        slot.className = 'spread-slot';
+        // 為每個卡片的 front content 設定獨立 id
+        slot.innerHTML = `
+          <div class="slot-label-wrap">
+            <div class="slot-num">${i+1}</div>
+            <div class="slot-label">${positions[i]}</div>
+          </div>
+          <div class="tarot-card" onclick="flip(this, ${i})" id="card-${i}">
+            <div class="card-inner" id="inner-${i}">
+              <div class="card-back">
+                <div class="back-design">
+                  <div class="back-star">✦</div>
+                </div>
+              </div>
+              <div class="card-front">
+                <div class="card-front-content" id="content-${i}"></div>
               </div>
             </div>
-            <div class="card-front">
-              <div class="card-front-content" id="content-${i}"></div>
-            </div>
-          </div>
-        </div>`;
-      container.appendChild(slot);
-    }
-  }
-
-  function flip(el, index) {
-    if (flippedStatus[index]) return;
-    const data = selectedCards[index];
-    const content = document.getElementById(`content-${index}`);
-    const displayName = data.suit === '大阿爾克那'
-      ? data.name
-      : `${data.suit}${data.name}`;
-
-    content.innerHTML = `
-      <div class="card-header">
-        <span class="card-num-badge">${index+1}/${currentCount}</span>
-        <span class="card-orientation ${data.isReversed ? 'reversed' : 'upright'}">${data.isReversed ? '逆位' : '正位'}</span>
-      </div>
-      <div class="card-art-area">
-        <div class="card-symbol">${data.symbol || '✦'}</div>
-      </div>
-      <div class="card-divider"></div>
-      <div class="card-name">${displayName}</div>
-      <div class="card-suit-tag">${data.suit}</div>
-      <div class="card-desc-text">${data.desc}</div>
-    `;
-
-    if (data.isReversed) el.classList.add('is-reversed');
-    el.classList.add('is-flipped');
-    flippedStatus[index] = true;
-
-    updateDots();
-
-    if (flippedStatus.every(Boolean)) showResult();
-  }
-
-  function revealAll() {
-    for (let i = 0; i < currentCount; i++) {
-      if (!flippedStatus[i]) {
-        const el = document.getElementById(`card-${i}`);
-        if (el) flip(el, i);
+          </div>`;
+        container.appendChild(slot);
       }
     }
-  }
 
-  function updateDots() {
-    const dotsEl = document.getElementById('progressDots');
-    dotsEl.innerHTML = '';
-    flippedStatus.forEach(done => {
-      const dot = document.createElement('div');
-      dot.className = 'dot' + (done ? ' done' : '');
-      dotsEl.appendChild(dot);
-    });
-    if (flippedStatus.every(Boolean)) {
-      document.getElementById('tapHint').style.display = 'none';
+    // 翻牌函數 (全域)
+    window.flip = function(el, index) {
+      if (flippedStatus[index]) return; // 已翻開則忽略
+      const data = selectedCards[index];
+      const content = document.getElementById(`content-${index}`);
+      if (!content) return;
+
+      // 組合顯示名稱
+      const displayName = data.suit === '大阿爾克那' 
+        ? data.name 
+        : `${data.suit} ${data.name}`;
+
+      // 填充正面內容
+      content.innerHTML = `
+        <div class="card-header">
+          <span class="card-num-badge">${index+1}/${currentCount}</span>
+          <span class="card-orientation ${data.isReversed ? 'reversed' : 'upright'}">${data.isReversed ? '逆位' : '正位'}</span>
+        </div>
+        <div class="card-art-area">
+          <div class="card-symbol">${data.symbol || '✦'}</div>
+        </div>
+        <div class="card-divider"></div>
+        <div class="card-name">${displayName}</div>
+        <div class="card-suit-tag">${data.suit}</div>
+        <div class="card-desc-text">${data.desc}</div>
+      `;
+
+      // 處理正逆位類別
+      if (data.isReversed) {
+        el.classList.add('is-reversed');
+      } else {
+        el.classList.remove('is-reversed');
+      }
+      el.classList.add('is-flipped');
+      flippedStatus[index] = true;
+
+      updateDots();
+
+      // 如果全部翻開，顯示解讀
+      if (flippedStatus.every(Boolean)) {
+        showResult();
+      }
+    };
+
+    // 全部翻開
+    window.revealAll = function() {
+      for (let i = 0; i < currentCount; i++) {
+        if (!flippedStatus[i]) {
+          const el = document.getElementById(`card-${i}`);
+          if (el) flip(el, i);
+        }
+      }
+    };
+
+    // 更新進度點點
+    function updateDots() {
+      const dotsEl = document.getElementById('progressDots');
+      dotsEl.innerHTML = '';
+      flippedStatus.forEach(done => {
+        const dot = document.createElement('div');
+        dot.className = 'dot' + (done ? ' done' : '');
+        dotsEl.appendChild(dot);
+      });
+      if (flippedStatus.every(Boolean)) {
+        document.getElementById('tapHint').style.display = 'none';
+      }
     }
-  }
 
-  function showResult() {
-    const panel = document.getElementById('resultPanel');
-    const cards = document.getElementById('resultCards');
-    const positions = getPositions(currentCount);
-    const badgeClass = ['badge-past','badge-now','badge-future','badge-past','badge-now'];
-    cards.innerHTML = '';
-    selectedCards.forEach((c, i) => {
-      const displayName = c.suit === '大阿爾克那' ? c.name : `${c.suit}${c.name}`;
-      cards.innerHTML += `
-        <div class="result-row">
-          <div class="result-badge ${badgeClass[i] || 'badge-past'}">${c.symbol || '✦'}</div>
-          <div class="result-info">
-            <div class="result-position">${positions[i]}</div>
-            <div class="result-card-name">${displayName}
-              <span class="result-card-pos ${c.isReversed ? 'rev' : 'up'}">${c.isReversed ? '逆位' : '正位'}</span>
+    // 顯示結果面板
+    function showResult() {
+      const panel = document.getElementById('resultPanel');
+      const cards = document.getElementById('resultCards');
+      const positions = getPositions(currentCount);
+      // 簡易 badge 循環用
+      const badgeMap = { 0:'badge-past', 1:'badge-now', 2:'badge-future', 3:'badge-past', 4:'badge-now' };
+      cards.innerHTML = '';
+      selectedCards.forEach((c, i) => {
+        const displayName = c.suit === '大阿爾克那' ? c.name : `${c.suit} ${c.name}`;
+        cards.innerHTML += `
+          <div class="result-row">
+            <div class="result-badge ${badgeMap[i] || 'badge-past'}">${c.symbol || '✦'}</div>
+            <div class="result-info">
+              <div class="result-position">${positions[i]}</div>
+              <div class="result-card-name">${displayName}
+                <span class="result-card-pos ${c.isReversed ? 'rev' : 'up'}">${c.isReversed ? '逆位' : '正位'}</span>
+              </div>
+              <div class="result-meaning">${c.desc}</div>
             </div>
-            <div class="result-meaning">${c.desc}</div>
-          </div>
-        </div>`;
-    });
-    panel.classList.add('visible');
-    setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
-  }
+          </div>`;
+      });
+      panel.classList.add('visible');
+      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
+    }
 
-  /* ─── Theme ─── */
-  function toggleTheme() {
-    const html = document.documentElement;
-    const isDark = html.getAttribute('data-theme') === 'dark';
-    html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-    document.getElementById('pill-dark').classList.toggle('active', !isDark);
-    document.getElementById('pill-light').classList.toggle('active', isDark);
-  }
+    // 初始化主題外觀
+    document.getElementById('pill-dark').classList.add('active');
+    document.getElementById('pill-light').classList.remove('active');
 
-  /* ─── Init ─── */
-  document.getElementById('pill-dark').classList.add('active');
-  shuffleAndReset();
+    // 啟動：第一次洗牌
+    shuffleAndReset();
+  })();
 </script>
 </body>
 </html>
