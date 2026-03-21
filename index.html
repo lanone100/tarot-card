@@ -1,965 +1,698 @@
 <!DOCTYPE html>
 <html lang="zh-Hant" data-theme="dark">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>塔羅 · 神秘占卜</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet" />
-  <style>
-    /* ─── CSS Variables ─── */
-    :root {
-      --radius-card: 20px;
-      --radius-btn: 50px;
-      --transition: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-      --font-display: 'Cinzel Decorative', serif;
-      --font-body: 'Noto Serif TC', serif;
-    }
-
-    /* DARK THEME */
-    [data-theme="dark"] {
-      --bg: #0c0c14;
-      --bg2: #13131f;
-      --bg3: #1c1c2e;
-      --surface: rgba(255,255,255,0.06);
-      --surface2: rgba(255,255,255,0.10);
-      --border: rgba(255,255,255,0.12);
-      --text: #f0eee8;
-      --text2: rgba(240,238,232,0.65);
-      --text3: rgba(240,238,232,0.38);
-      --gold: #e8c96a;
-      --gold2: #b8962a;
-      --accent-a: #9b7de8;
-      --accent-b: #6dc0f5;
-      --accent-c: #f08080;
-      --card-bg: linear-gradient(145deg, #1c1a32 0%, #131224 100%);
-      --card-face: linear-gradient(160deg, #fdf8ee 0%, #f5edd8 100%);
-      --glow: rgba(232,201,106,0.25);
-      --shimmer: rgba(255,255,255,0.04);
-    }
-
-    /* LIGHT THEME */
-    [data-theme="light"] {
-      --bg: #f2f0ec;
-      --bg2: #e8e4dc;
-      --bg3: #ddd8ce;
-      --surface: rgba(255,255,255,0.72);
-      --surface2: rgba(255,255,255,0.90);
-      --border: rgba(0,0,0,0.08);
-      --text: #1a1814;
-      --text2: rgba(26,24,20,0.62);
-      --text3: rgba(26,24,20,0.38);
-      --gold: #8a6a18;
-      --gold2: #b8962a;
-      --accent-a: #6b4ecf;
-      --accent-b: #2882c4;
-      --accent-c: #c44040;
-      --card-bg: linear-gradient(145deg, #2d2850 0%, #1e1b40 100%);
-      --card-face: linear-gradient(160deg, #fffdf6 0%, #fdf5e4 100%);
-      --glow: rgba(138,106,24,0.18);
-      --shimmer: rgba(255,255,255,0.55);
-    }
-
-    /* ─── Reset & Base ─── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-body);
-      min-height: 100vh;
-      overflow-x: hidden;
-      transition: background var(--transition), color var(--transition);
-    }
-
-    /* ─── Background Orbs ─── */
-    .bg-orbs {
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      overflow: hidden;
-    }
-    .orb {
-      position: absolute;
-      border-radius: 50%;
-      filter: blur(80px);
-      opacity: 0.18;
-      animation: float 12s ease-in-out infinite;
-    }
-    [data-theme="dark"] .orb1 { width: 500px; height: 500px; background: #7c3aed; top: -150px; left: -150px; animation-delay: 0s; }
-    [data-theme="dark"] .orb2 { width: 400px; height: 400px; background: #1d4ed8; bottom: -100px; right: -100px; animation-delay: -4s; }
-    [data-theme="dark"] .orb3 { width: 300px; height: 300px; background: #b45309; top: 40%; left: 50%; animation-delay: -8s; }
-    [data-theme="light"] .orb1 { width: 500px; height: 500px; background: #c4b5fd; top: -150px; left: -150px; animation-delay: 0s; opacity: 0.25; }
-    [data-theme="light"] .orb2 { width: 400px; height: 400px; background: #93c5fd; bottom: -100px; right: -100px; animation-delay: -4s; opacity: 0.22; }
-    [data-theme="light"] .orb3 { width: 300px; height: 300px; background: #fcd34d; top: 40%; left: 50%; animation-delay: -8s; opacity: 0.2; }
-    @keyframes float {
-      0%, 100% { transform: translate(0,0) scale(1); }
-      33%       { transform: translate(30px,-20px) scale(1.05); }
-      66%       { transform: translate(-20px,30px) scale(0.96); }
-    }
-
-    /* ─── Layout ─── */
-    .page {
-      position: relative;
-      z-index: 1;
-      max-width: 960px;
-      margin: 0 auto;
-      padding: 24px 16px 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 0;
-    }
-
-    /* ─── Topbar ─── */
-    .topbar {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 36px;
-    }
-
-    .brand {
-      font-family: var(--font-display);
-      font-size: clamp(13px, 2.5vw, 16px);
-      color: var(--gold);
-      letter-spacing: 1px;
-    }
-
-    /* Theme Toggle */
-    .theme-toggle {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 30px;
-      padding: 6px;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      backdrop-filter: blur(12px);
-      transition: background var(--transition), border var(--transition);
-    }
-    .theme-toggle .pill {
-      width: 32px;
-      height: 28px;
-      border-radius: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 15px;
-      transition: background var(--transition), transform 0.2s;
-    }
-    .theme-toggle .pill.active {
-      background: var(--surface2);
-      box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    }
-    .theme-toggle:hover { border-color: var(--gold2); }
-
-    /* ─── Header ─── */
-    .hero {
-      text-align: center;
-      margin-bottom: 44px;
-    }
-    .hero-eyebrow {
-      font-size: 11px;
-      letter-spacing: 4px;
-      text-transform: uppercase;
-      color: var(--gold);
-      margin-bottom: 14px;
-      opacity: 0.85;
-    }
-    .hero-title {
-      font-family: var(--font-display);
-      font-size: clamp(26px, 6vw, 48px);
-      line-height: 1.2;
-      color: var(--text);
-      margin-bottom: 14px;
-    }
-    .hero-title span {
-      background: linear-gradient(135deg, var(--gold), var(--accent-a));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .hero-sub {
-      color: var(--text2);
-      font-size: clamp(13px, 2vw, 15px);
-      font-weight: 300;
-      letter-spacing: 0.5px;
-    }
-
-    /* ─── Spread Selection ─── */
-    .spread-picker {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 40px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-    .spread-chip {
-      padding: 8px 20px;
-      border-radius: 30px;
-      border: 1px solid var(--border);
-      background: var(--surface);
-      color: var(--text2);
-      font-size: 13px;
-      font-family: var(--font-body);
-      cursor: pointer;
-      backdrop-filter: blur(10px);
-      transition: all var(--transition);
-    }
-    .spread-chip.active,
-    .spread-chip:hover {
-      border-color: var(--gold);
-      color: var(--gold);
-      background: rgba(232,201,106,0.08);
-    }
-
-    /* ─── Card Grid ─── */
-    .spread-container {
-      display: flex;
-      gap: clamp(14px, 3vw, 28px);
-      flex-wrap: wrap;
-      justify-content: center;
-      align-items: flex-start;
-      margin-bottom: 48px;
-      perspective: 1800px;
-    }
-
-    .spread-slot {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-    }
-
-    .slot-label-wrap {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 4px;
-    }
-    .slot-num {
-      width: 22px; height: 22px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--gold), var(--accent-a));
-      display: flex; align-items: center; justify-content: center;
-      font-size: 11px;
-      font-weight: 700;
-      color: #fff;
-    }
-    .slot-label {
-      color: var(--text2);
-      font-size: 13px;
-      letter-spacing: 1px;
-    }
-
-    /* ─── Card ─── */
-    .tarot-card {
-      width: clamp(110px, 22vw, 160px);
-      height: clamp(192px, 38.5vw, 280px);
-      cursor: pointer;
-      position: relative;
-      user-select: none;
-    }
-    .tarot-card:hover .card-inner { transform: rotateY(10deg) translateY(-4px); box-shadow: 0 20px 50px var(--glow), 0 0 0 1px rgba(232,201,106,0.15); }
-    .tarot-card.is-flipped:hover .card-inner { transform: rotateY(180deg) translateY(-4px); }
-
-    .card-inner {
-      width: 100%; height: 100%;
-      transform-style: preserve-3d;
-      transition: transform 0.75s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.35s;
-      border-radius: var(--radius-card);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.35), 0 0 0 1px var(--border);
-      will-change: transform;
-    }
-    .tarot-card.is-flipped .card-inner {
-      transform: rotateY(180deg);
-      box-shadow: 0 20px 60px var(--glow), 0 0 0 1.5px var(--gold2);
-    }
-
-    .card-front, .card-back {
-      position: absolute;
-      inset: 0;
-      backface-visibility: hidden;
-      border-radius: var(--radius-card);
-      overflow: hidden;
-    }
-
-    /* ── Card Back ── */
-    .card-back {
-      background: var(--card-bg);
-      display: flex; align-items: center; justify-content: center;
-      border: 2px solid rgba(232,201,106,0.3);
-    }
-    .back-design {
-      width: 85%; height: 85%;
-      border: 1px solid rgba(232,201,106,0.2);
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      position: relative;
-    }
-    .back-design::before {
-      content: '';
-      position: absolute;
-      inset: 8px;
-      border: 1px solid rgba(232,201,106,0.12);
-      border-radius: 8px;
-    }
-    .back-star {
-      font-size: clamp(28px, 6vw, 42px);
-      animation: spin-slow 20s linear infinite;
-      filter: drop-shadow(0 0 10px rgba(232,201,106,0.6));
-    }
-    @keyframes spin-slow { to { transform: rotate(360deg); } }
-
-    /* ── Card Front ── */
-    .card-front {
-      background: var(--card-face);
-      transform: rotateY(180deg);
-      border: 2px solid rgba(232,201,106,0.5);
-      display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-      padding: clamp(8px, 1.5vw, 14px);
-    }
-    .card-front-content {
-      display: flex; flex-direction: column; align-items: center;
-      width: 100%; height: 100%;
-      transition: transform 0.3s;
-    }
-    .is-reversed .card-front-content { transform: rotate(180deg); }
-
-    .card-header {
-      width: 100%;
-      display: flex; justify-content: space-between; align-items: center;
-    }
-    .card-num-badge {
-      font-size: 10px; color: #999; font-weight: 300;
-    }
-    .card-orientation {
-      font-size: 9px;
-      padding: 2px 7px;
-      border-radius: 8px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-    .card-orientation.upright { background: #dcfce7; color: #166534; }
-    .card-orientation.reversed { background: #fee2e2; color: #991b1b; }
-
-    .card-art-area {
-      flex: 1;
-      display: flex; align-items: center; justify-content: center;
-      width: 100%;
-    }
-    .card-symbol {
-      font-size: clamp(30px, 8vw, 52px);
-      line-height: 1;
-      filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
-    }
-
-    .card-divider {
-      width: 70%;
-      height: 1px;
-      background: linear-gradient(to right, transparent, rgba(180,150,60,0.4), transparent);
-      margin: 6px 0;
-    }
-
-    .card-name {
-      font-size: clamp(11px, 2.2vw, 15px);
-      font-weight: 700;
-      color: #1a1a1a;
-      text-align: center;
-      letter-spacing: 0.5px;
-      line-height: 1.3;
-    }
-    .card-suit-tag {
-      font-size: clamp(9px, 1.8vw, 11px);
-      color: #888;
-      margin-top: 3px;
-      letter-spacing: 1px;
-    }
-    .card-desc-text {
-      font-size: clamp(8px, 1.5vw, 10px);
-      color: #555;
-      text-align: center;
-      margin-top: 6px;
-      line-height: 1.5;
-      opacity: 0.8;
-    }
-
-    /* ─── Tap Hint ─── */
-    .tap-hint {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 11px; color: var(--text3);
-      animation: pulse-fade 2.5s ease-in-out infinite;
-    }
-    @keyframes pulse-fade { 0%,100%{opacity:0.5} 50%{opacity:1} }
-
-    /* ─── Controls ─── */
-    .controls {
-      display: flex;
-      gap: 14px;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
-    .btn {
-      display: inline-flex; align-items: center; gap: 8px;
-      padding: 14px 32px;
-      border-radius: var(--radius-btn);
-      border: none;
-      font-family: var(--font-body);
-      font-size: 15px;
-      cursor: pointer;
-      transition: all 0.25s;
-      letter-spacing: 0.3px;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--gold), var(--gold2));
-      color: #0c0c14;
-      font-weight: 700;
-      box-shadow: 0 4px 20px rgba(184,150,42,0.35);
-    }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(184,150,42,0.5); }
-    .btn-primary:active { transform: translateY(0); }
-    .btn-secondary {
-      background: var(--surface);
-      color: var(--text);
-      border: 1px solid var(--border);
-      backdrop-filter: blur(10px);
-    }
-    .btn-secondary:hover { border-color: var(--gold); color: var(--gold); background: rgba(232,201,106,0.07); }
-
-    /* ─── Result Panel ─── */
-    .result-panel {
-      width: 100%;
-      max-width: 680px;
-      margin-top: 40px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      padding: 28px;
-      backdrop-filter: blur(20px);
-      display: none;
-      animation: slide-up 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
-    .result-panel.visible { display: block; }
-    @keyframes slide-up {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .result-title {
-      font-family: var(--font-display);
-      font-size: 14px;
-      color: var(--gold);
-      letter-spacing: 2px;
-      margin-bottom: 20px;
-      text-align: center;
-    }
-
-    .result-cards {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-    .result-row {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 16px;
-      background: var(--shimmer);
-      border-radius: 14px;
-      border: 1px solid var(--border);
-    }
-    .result-badge {
-      width: 42px; height: 42px;
-      border-radius: 12px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 20px;
-      flex-shrink: 0;
-    }
-    .badge-past   { background: linear-gradient(135deg, #6b4ecf22, #6b4ecf44); }
-    .badge-now    { background: linear-gradient(135deg, #b4571022, #b4571044); }
-    .badge-future { background: linear-gradient(135deg, #0f74a622, #0f74a644); }
-    .result-info { flex: 1; }
-    .result-position { font-size: 11px; color: var(--text3); letter-spacing: 1px; margin-bottom: 4px; }
-    .result-card-name { font-size: 15px; font-weight: 600; color: var(--text); }
-    .result-card-pos {
-      display: inline-block;
-      font-size: 10px;
-      padding: 2px 8px;
-      border-radius: 8px;
-      margin-left: 6px;
-      font-weight: 600;
-    }
-    .result-card-pos.up   { background: #dcfce7; color: #166534; }
-    .result-card-pos.rev  { background: #fee2e2; color: #991b1b; }
-    .result-meaning { font-size: 12px; color: var(--text2); margin-top: 5px; line-height: 1.6; }
-
-    /* ─── Stars / Separator ─── */
-    .star-sep {
-      text-align: center;
-      color: var(--gold);
-      font-size: 13px;
-      letter-spacing: 10px;
-      opacity: 0.45;
-      margin: 14px 0 0;
-    }
-
-    /* ─── Progress Dots ─── */
-    .progress-dots {
-      display: flex; gap: 8px; justify-content: center; margin-bottom: 28px;
-    }
-    .dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: var(--border);
-      transition: background 0.3s, transform 0.3s;
-    }
-    .dot.done { background: var(--gold); transform: scale(1.2); }
-
-    /* ─── Shuffle Overlay ─── */
-    .shuffle-overlay {
-      position: fixed;
-      inset: 0;
-      z-index: 999;
-      pointer-events: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .shuffle-overlay.active { pointer-events: all; }
-
-    /* Deck stack shown during shuffle */
-    .deck-stage {
-      position: relative;
-      width: 160px;
-      height: 280px;
-    }
-
-    /* Flying cards during shuffle */
-    .fly-card {
-      position: fixed;
-      width: clamp(80px, 15vw, 120px);
-      height: clamp(140px, 26vw, 210px);
-      border-radius: 14px;
-      background: linear-gradient(145deg, #1c1a32 0%, #131224 100%);
-      border: 2px solid rgba(232,201,106,0.35);
-      display: flex; align-items: center; justify-content: center;
-      font-size: clamp(22px, 5vw, 34px);
-      pointer-events: none;
-      z-index: 1000;
-      box-shadow: 0 8px 30px rgba(0,0,0,0.5), 0 0 20px rgba(232,201,106,0.12);
-      will-change: transform, opacity;
-      backface-visibility: hidden;
-    }
-    [data-theme="light"] .fly-card {
-      background: linear-gradient(145deg, #2d2850 0%, #1e1b40 100%);
-    }
-
-    /* Backdrop blur during shuffle */
-    .shuffle-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0);
-      z-index: 998;
-      transition: background 0.3s;
-      pointer-events: none;
-    }
-    .shuffle-backdrop.active { background: rgba(0,0,0,0.55); pointer-events: all; }
-    [data-theme="light"] .shuffle-backdrop.active { background: rgba(0,0,0,0.3); }
-
-    /* Shuffle status label */
-    .shuffle-status {
-      position: fixed;
-      bottom: 40px;
-      left: 50%;
-      transform: translateX(-50%) translateY(20px);
-      background: rgba(232,201,106,0.12);
-      border: 1px solid rgba(232,201,106,0.3);
-      color: var(--gold);
-      font-size: 13px;
-      letter-spacing: 3px;
-      padding: 10px 28px;
-      border-radius: 30px;
-      backdrop-filter: blur(12px);
-      z-index: 1001;
-      opacity: 0;
-      transition: opacity 0.3s, transform 0.3s;
-      white-space: nowrap;
-    }
-    .shuffle-status.visible {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    /* Cards deal-in animation */
-    @keyframes card-deal-in {
-      0%   { opacity: 0; transform: translateY(-60px) scale(0.8) rotateX(25deg); }
-      60%  { opacity: 1; transform: translateY(6px) scale(1.02) rotateX(0deg); }
-      100% { opacity: 1; transform: translateY(0) scale(1) rotateX(0deg); }
-    }
-    .spread-slot {
-      opacity: 0;
-      animation: none;
-    }
-    .spread-slot.deal-in {
-      animation: card-deal-in 0.55s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-    }
-
-    /* Button shimmer during animation */
-    .btn-primary.shuffling {
-      pointer-events: none;
-      opacity: 0.6;
-    }
-
-    /* Particle burst */
-    .particle {
-      position: fixed;
-      width: 6px; height: 6px;
-      border-radius: 50%;
-      pointer-events: none;
-      z-index: 1002;
-      will-change: transform, opacity;
-    }
-
-    /* ─── Responsive ─── */
-    @media (max-width: 520px) {
-      .spread-container { gap: 10px; }
-      .tarot-card { width: 95px; height: 165px; }
-      .card-symbol { font-size: 26px; }
-      .btn { padding: 12px 22px; font-size: 14px; }
-    }
-  </style>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>塔羅 · 神秘占卜</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@300;400;600;700&family=Cinzel+Decorative:wght@400;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--radius-card:20px;--radius-btn:50px;--transition:.35s cubic-bezier(.4,0,.2,1);--font-display:'Cinzel Decorative',serif;--font-body:'Noto Serif TC',serif}
+[data-theme="dark"]{--bg:#0c0c14;--bg2:#13131f;--bg3:#1c1c2e;--surface:rgba(255,255,255,.06);--surface2:rgba(255,255,255,.10);--border:rgba(255,255,255,.12);--text:#f0eee8;--text2:rgba(240,238,232,.65);--text3:rgba(240,238,232,.38);--gold:#e8c96a;--gold2:#b8962a;--accent-a:#9b7de8;--accent-b:#6dc0f5;--accent-c:#f08080;--card-bg:linear-gradient(145deg,#1c1a32 0%,#131224 100%);--card-face:linear-gradient(160deg,#fdf8ee 0%,#f5edd8 100%);--glow:rgba(232,201,106,.25);--shimmer:rgba(255,255,255,.04)}
+[data-theme="light"]{--bg:#f2f0ec;--bg2:#e8e4dc;--bg3:#ddd8ce;--surface:rgba(255,255,255,.72);--surface2:rgba(255,255,255,.90);--border:rgba(0,0,0,.08);--text:#1a1814;--text2:rgba(26,24,20,.62);--text3:rgba(26,24,20,.38);--gold:#8a6a18;--gold2:#b8962a;--accent-a:#6b4ecf;--accent-b:#2882c4;--accent-c:#c44040;--card-bg:linear-gradient(145deg,#2d2850 0%,#1e1b40 100%);--card-face:linear-gradient(160deg,#fffdf6 0%,#fdf5e4 100%);--glow:rgba(138,106,24,.18);--shimmer:rgba(255,255,255,.55)}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);min-height:100vh;overflow-x:hidden;transition:background var(--transition),color var(--transition)}
+#starCanvas{position:fixed;inset:0;pointer-events:none;z-index:0}
+#vfxCanvas{position:fixed;inset:0;pointer-events:none;z-index:9998}
+#screenFlash{position:fixed;inset:0;pointer-events:none;z-index:9997;opacity:0;background:radial-gradient(ellipse at center,rgba(232,201,106,.55),transparent 70%);transition:opacity .08s}
+.bg-orbs{position:fixed;inset:0;pointer-events:none;z-index:1;overflow:hidden}
+.orb{position:absolute;border-radius:50%;filter:blur(80px);opacity:.18;animation:float 12s ease-in-out infinite}
+[data-theme="dark"] .orb1{width:500px;height:500px;background:#7c3aed;top:-150px;left:-150px}
+[data-theme="dark"] .orb2{width:400px;height:400px;background:#1d4ed8;bottom:-100px;right:-100px;animation-delay:-4s}
+[data-theme="dark"] .orb3{width:300px;height:300px;background:#b45309;top:40%;left:50%;animation-delay:-8s}
+[data-theme="light"] .orb1{width:500px;height:500px;background:#c4b5fd;top:-150px;left:-150px;opacity:.25}
+[data-theme="light"] .orb2{width:400px;height:400px;background:#93c5fd;bottom:-100px;right:-100px;animation-delay:-4s;opacity:.22}
+[data-theme="light"] .orb3{width:300px;height:300px;background:#fcd34d;top:40%;left:50%;animation-delay:-8s;opacity:.2}
+@keyframes float{0%,100%{transform:translate(0,0)scale(1)}33%{transform:translate(30px,-20px)scale(1.05)}66%{transform:translate(-20px,30px)scale(.96)}}
+.page{position:relative;z-index:2;max-width:960px;margin:0 auto;padding:24px 16px 60px;display:flex;flex-direction:column;align-items:center}
+.topbar{width:100%;display:flex;justify-content:space-between;align-items:center;margin-bottom:36px}
+.brand{font-family:var(--font-display);font-size:clamp(13px,2.5vw,16px);color:var(--gold);letter-spacing:1px}
+.topbar-right{display:flex;gap:10px;align-items:center}
+.theme-toggle{background:var(--surface);border:1px solid var(--border);border-radius:30px;padding:6px;cursor:pointer;display:flex;align-items:center;gap:4px;backdrop-filter:blur(12px);transition:background var(--transition),border var(--transition)}
+.theme-toggle .pill{width:32px;height:28px;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:15px;transition:background var(--transition)}
+.theme-toggle .pill.active{background:var(--surface2);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.theme-toggle:hover{border-color:var(--gold2)}
+.sound-btn{background:var(--surface);border:1px solid var(--border);border-radius:22px;padding:7px 15px;cursor:pointer;font-size:12px;color:var(--text3);backdrop-filter:blur(10px);transition:all var(--transition);font-family:var(--font-body);letter-spacing:.5px}
+.sound-btn:hover,.sound-btn.on{border-color:var(--gold);color:var(--gold);background:rgba(232,201,106,.08)}
+.hero{text-align:center;margin-bottom:44px}
+.hero-eyebrow{font-size:11px;letter-spacing:4px;text-transform:uppercase;color:var(--gold);margin-bottom:14px;opacity:.85}
+.hero-title{font-family:var(--font-display);font-size:clamp(26px,6vw,48px);line-height:1.2;color:var(--text);margin-bottom:14px}
+.hero-title span{background:linear-gradient(135deg,var(--gold),var(--accent-a));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero-sub{color:var(--text2);font-size:clamp(13px,2vw,15px);font-weight:300;letter-spacing:.5px}
+.spread-picker{display:flex;gap:10px;margin-bottom:40px;flex-wrap:wrap;justify-content:center}
+.spread-chip{padding:8px 20px;border-radius:30px;border:1px solid var(--border);background:var(--surface);color:var(--text2);font-size:13px;font-family:var(--font-body);cursor:pointer;backdrop-filter:blur(10px);transition:all var(--transition)}
+.spread-chip.active,.spread-chip:hover{border-color:var(--gold);color:var(--gold);background:rgba(232,201,106,.08)}
+.spread-container{display:flex;gap:clamp(14px,3vw,28px);flex-wrap:wrap;justify-content:center;align-items:flex-start;margin-bottom:48px;perspective:1800px}
+.spread-slot{display:flex;flex-direction:column;align-items:center;gap:14px;opacity:0}
+.slot-label-wrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.slot-num{width:22px;height:22px;border-radius:50%;background:linear-gradient(135deg,var(--gold),var(--accent-a));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:#fff}
+.slot-label{color:var(--text2);font-size:13px;letter-spacing:1px}
+.tarot-card{width:clamp(110px,22vw,160px);height:clamp(192px,38.5vw,280px);cursor:pointer;position:relative;user-select:none}
+.tarot-card:hover .card-inner{transform:rotateY(10deg) translateY(-4px);box-shadow:0 20px 50px var(--glow),0 0 0 1px rgba(232,201,106,.15)}
+.tarot-card.is-flipped:hover .card-inner{transform:rotateY(180deg) translateY(-4px)}
+.card-inner{width:100%;height:100%;transform-style:preserve-3d;transition:transform .75s cubic-bezier(.4,0,.2,1),box-shadow .35s;border-radius:var(--radius-card);box-shadow:0 10px 30px rgba(0,0,0,.35),0 0 0 1px var(--border);will-change:transform}
+.tarot-card.is-flipped .card-inner{transform:rotateY(180deg);box-shadow:0 20px 60px var(--glow),0 0 0 1.5px var(--gold2)}
+@keyframes aura-pulse{0%{box-shadow:0 0 0 0 rgba(232,201,106,.8),0 20px 60px var(--glow)}50%{box-shadow:0 0 0 22px rgba(232,201,106,0),0 20px 60px var(--glow)}100%{box-shadow:0 0 0 0 rgba(232,201,106,0),0 20px 60px var(--glow)}}
+.tarot-card.just-flipped .card-inner{animation:aura-pulse .85s ease-out}
+.card-front,.card-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--radius-card);overflow:hidden}
+.card-back{background:var(--card-bg);display:flex;align-items:center;justify-content:center;border:2px solid rgba(232,201,106,.3)}
+.back-design{width:85%;height:85%;border:1px solid rgba(232,201,106,.2);border-radius:12px;display:flex;align-items:center;justify-content:center;position:relative}
+.back-design::before{content:'';position:absolute;inset:8px;border:1px solid rgba(232,201,106,.12);border-radius:8px}
+.back-star{font-size:clamp(28px,6vw,42px);animation:spin-slow 20s linear infinite;filter:drop-shadow(0 0 10px rgba(232,201,106,.6))}
+@keyframes spin-slow{to{transform:rotate(360deg)}}
+.card-front{background:var(--card-face);transform:rotateY(180deg);border:2px solid rgba(232,201,106,.5);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:clamp(8px,1.5vw,14px)}
+.card-front-content{display:flex;flex-direction:column;align-items:center;width:100%;height:100%;transition:transform .3s}
+.is-reversed .card-front-content{transform:rotate(180deg)}
+.card-header{width:100%;display:flex;justify-content:space-between;align-items:center}
+.card-num-badge{font-size:10px;color:#999;font-weight:300}
+.card-orientation{font-size:9px;padding:2px 7px;border-radius:8px;font-weight:600;letter-spacing:.5px}
+.card-orientation.upright{background:#dcfce7;color:#166534}
+.card-orientation.reversed{background:#fee2e2;color:#991b1b}
+.card-art-area{flex:1;display:flex;align-items:center;justify-content:center;width:100%}
+.card-symbol{font-size:clamp(30px,8vw,52px);line-height:1;filter:drop-shadow(0 2px 8px rgba(0,0,0,.15))}
+.card-divider{width:70%;height:1px;background:linear-gradient(to right,transparent,rgba(180,150,60,.4),transparent);margin:6px 0}
+.card-name{font-size:clamp(11px,2.2vw,15px);font-weight:700;color:#1a1a1a;text-align:center;letter-spacing:.5px;line-height:1.3}
+.card-suit-tag{font-size:clamp(9px,1.8vw,11px);color:#888;margin-top:3px;letter-spacing:1px}
+.card-desc-text{font-size:clamp(8px,1.5vw,10px);color:#555;text-align:center;margin-top:6px;line-height:1.5;opacity:.8}
+.tap-hint{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text3);animation:pulse-fade 2.5s ease-in-out infinite}
+@keyframes pulse-fade{0%,100%{opacity:.5}50%{opacity:1}}
+.controls{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:14px 32px;border-radius:var(--radius-btn);border:none;font-family:var(--font-body);font-size:15px;cursor:pointer;transition:all .25s;letter-spacing:.3px}
+.btn-primary{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#0c0c14;font-weight:700;box-shadow:0 4px 20px rgba(184,150,42,.35)}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 30px rgba(184,150,42,.5)}
+.btn-primary:active{transform:translateY(0)}
+.btn-primary.shuffling{pointer-events:none;opacity:.6}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border);backdrop-filter:blur(10px)}
+.btn-secondary:hover{border-color:var(--gold);color:var(--gold);background:rgba(232,201,106,.07)}
+.progress-dots{display:flex;gap:8px;justify-content:center;margin-bottom:28px}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background .3s,transform .3s}
+.dot.done{background:var(--gold);transform:scale(1.2)}
+.result-panel{width:100%;max-width:680px;margin-top:40px;background:var(--surface);border:1px solid var(--border);border-radius:24px;padding:28px;backdrop-filter:blur(20px);display:none;animation:slide-up .5s cubic-bezier(.4,0,.2,1) forwards}
+.result-panel.visible{display:block}
+@keyframes slide-up{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+.result-title{font-family:var(--font-display);font-size:14px;color:var(--gold);letter-spacing:2px;margin-bottom:20px;text-align:center}
+.result-cards{display:flex;flex-direction:column;gap:14px}
+.result-row{display:flex;align-items:flex-start;gap:16px;padding:16px;background:var(--shimmer);border-radius:14px;border:1px solid var(--border)}
+.result-badge{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0}
+.badge-past{background:linear-gradient(135deg,#6b4ecf22,#6b4ecf44)}.badge-now{background:linear-gradient(135deg,#b4571022,#b4571044)}.badge-future{background:linear-gradient(135deg,#0f74a622,#0f74a644)}
+.result-info{flex:1}
+.result-position{font-size:11px;color:var(--text3);letter-spacing:1px;margin-bottom:4px}
+.result-card-name{font-size:15px;font-weight:600;color:var(--text)}
+.result-card-pos{display:inline-block;font-size:10px;padding:2px 8px;border-radius:8px;margin-left:6px;font-weight:600}
+.result-card-pos.up{background:#dcfce7;color:#166534}.result-card-pos.rev{background:#fee2e2;color:#991b1b}
+.result-meaning{font-size:12px;color:var(--text2);margin-top:5px;line-height:1.6}
+.star-sep{text-align:center;color:var(--gold);font-size:13px;letter-spacing:10px;opacity:.45;margin:14px 0 0}
+.shuffle-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0);z-index:998;transition:background .3s;pointer-events:none}
+.shuffle-backdrop.active{background:rgba(0,0,0,.65);pointer-events:all}
+[data-theme="light"] .shuffle-backdrop.active{background:rgba(0,0,0,.35)}
+.shuffle-status{position:fixed;bottom:44px;left:50%;transform:translateX(-50%) translateY(20px);background:rgba(232,201,106,.12);border:1px solid rgba(232,201,106,.3);color:var(--gold);font-size:13px;letter-spacing:3px;padding:10px 28px;border-radius:30px;backdrop-filter:blur(12px);z-index:1001;opacity:0;transition:opacity .3s,transform .3s;white-space:nowrap}
+.shuffle-status.visible{opacity:1;transform:translateX(-50%) translateY(0)}
+.fly-card{position:fixed;z-index:1100;border-radius:12px;background:linear-gradient(145deg,#1c1a32,#131224);border:1.5px solid rgba(232,201,106,.45);display:flex;align-items:center;justify-content:center;font-size:22px;color:rgba(232,201,106,.8);box-shadow:0 8px 28px rgba(0,0,0,.6);will-change:transform,opacity;pointer-events:none}
+[data-theme="light"] .fly-card{background:linear-gradient(145deg,#2d2850,#1e1b40)}
+@keyframes deal-in-pop{0%{opacity:0;transform:scale(.72) translateY(-18px)}65%{opacity:1;transform:scale(1.06) translateY(4px)}85%{transform:scale(.97) translateY(-2px)}100%{opacity:1;transform:scale(1) translateY(0)}}
+.deal-in{animation:deal-in-pop .55s cubic-bezier(.34,1.4,.64,1) forwards!important}
+.rune-stamp{position:fixed;pointer-events:none;z-index:9999;font-size:clamp(28px,5vw,44px);animation:rune-appear .95s ease forwards}
+@keyframes rune-appear{0%{opacity:0;transform:translate(-50%,-50%)scale(.35) rotate(-25deg)}40%{opacity:1;transform:translate(-50%,-50%)scale(1.18) rotate(4deg)}70%{transform:translate(-50%,-50%)scale(.96) rotate(-1deg)}100%{opacity:0;transform:translate(-50%,-50%)scale(1.3) rotate(0deg)}}
+@media(max-width:520px){.spread-container{gap:10px}.tarot-card{width:95px;height:165px}.card-symbol{font-size:26px}.btn{padding:12px 22px;font-size:14px}}
+</style>
 </head>
 <body>
-
-<div class="bg-orbs">
-  <div class="orb orb1"></div>
-  <div class="orb orb2"></div>
-  <div class="orb orb3"></div>
-</div>
+<canvas id="starCanvas"></canvas>
+<canvas id="vfxCanvas"></canvas>
+<div id="screenFlash"></div>
+<div class="bg-orbs"><div class="orb orb1"></div><div class="orb orb2"></div><div class="orb orb3"></div></div>
+<div class="shuffle-backdrop" id="shuffleBackdrop"></div>
+<div class="shuffle-status" id="shuffleStatus"></div>
 
 <div class="page">
-
-  <!-- Topbar -->
   <div class="topbar">
     <div class="brand">✦ TAROT</div>
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="切換主題">
-      <div class="pill" id="pill-dark">🌙</div>
-      <div class="pill" id="pill-light">☀️</div>
-    </button>
+    <div class="topbar-right">
+      <button class="sound-btn" id="soundBtn" onclick="toggleSound()">🔇 音效</button>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="切換主題">
+        <div class="pill" id="pill-dark">🌙</div>
+        <div class="pill" id="pill-light">☀️</div>
+      </button>
+    </div>
   </div>
 
-  <!-- Hero -->
   <div class="hero">
     <div class="hero-eyebrow">神秘塔羅占卜</div>
     <h1 class="hero-title">解讀你的<span>命運軌跡</span></h1>
     <p class="hero-sub">78 張完整牌組 · 正逆位占卜 · 洞察過去、現在、未來</p>
   </div>
 
-  <!-- Spread Picker -->
   <div class="spread-picker">
-    <button class="spread-chip active" onclick="selectSpread(this, 3)">🔺 聖三角（3張）</button>
-    <button class="spread-chip" onclick="selectSpread(this, 5)">✦ 五芒星（5張）</button>
-    <button class="spread-chip" onclick="selectSpread(this, 1)">◯ 單張每日（1張）</button>
+    <button class="spread-chip active" onclick="selectSpread(this,3)">🔺 聖三角（3張）</button>
+    <button class="spread-chip" onclick="selectSpread(this,5)">✦ 五芒星（5張）</button>
+    <button class="spread-chip" onclick="selectSpread(this,1)">◯ 單張每日（1張）</button>
   </div>
 
-  <!-- Progress Dots -->
   <div class="progress-dots" id="progressDots"></div>
-
-  <!-- Spread Area -->
   <div class="spread-container" id="spread"></div>
+  <div class="tap-hint" id="tapHint"><span>👆</span><span>輕觸牌面揭示命運</span></div>
 
-  <!-- Tap Hint -->
-  <div class="tap-hint" id="tapHint">
-    <span>👆</span><span>輕觸牌面揭示命運</span>
+  <div class="controls" style="margin-top:28px">
+    <button class="btn btn-primary" onclick="shuffleAndReset()">🔮 重新洗牌</button>
+    <button class="btn btn-secondary" onclick="revealAll()">✨ 全部翻開</button>
   </div>
 
-  <!-- Controls -->
-  <div class="controls" style="margin-top:28px;">
-    <button class="btn btn-primary" id="shuffleBtn" onclick="shuffleAndReset()">
-      🔮 重新洗牌
-    </button>
-    <button class="btn btn-secondary" onclick="revealAll()">
-      ✨ 全部翻開
-    </button>
-  </div>
-
-  <!-- Result Panel -->
   <div class="result-panel" id="resultPanel">
     <div class="result-title">✦ 牌陣解讀 ✦</div>
     <div class="result-cards" id="resultCards"></div>
     <div class="star-sep">· · ·</div>
   </div>
-
 </div>
 
-<!-- Shuffle Backdrop & Status (outside .page, fixed) -->
-<div class="shuffle-backdrop" id="shuffleBackdrop"></div>
-<div class="shuffle-status" id="shuffleStatus">正在洗牌...</div>
-
 <script>
-  (function() {
-    /* ─── Data ─── */
-    const majors = [
-      { name:"愚者",   symbol:"🌟", desc:"新的開始，純真無畏地踏入未知。" },
-      { name:"魔術師", symbol:"🌙", desc:"意志與技能的完美融合，掌握命運。" },
-      { name:"女祭司", symbol:"🔮", desc:"直覺與神秘智慧，守護內在真相。" },
-      { name:"皇后",   symbol:"🌿", desc:"豐盛、創造力與母性的溫柔力量。" },
-      { name:"皇帝",   symbol:"⚡", desc:"權威與秩序，以意志建立穩固基礎。" },
-      { name:"教皇",   symbol:"✝️", desc:"精神指引，尋求傳統智慧的庇護。" },
-      { name:"戀人",   symbol:"💫", desc:"重要抉擇，關於愛與價值觀的考驗。" },
-      { name:"戰車",   symbol:"🏆", desc:"意志力驅動勝利，克服重重阻礙。" },
-      { name:"力量",   symbol:"🦁", desc:"溫柔的內在力量勝過野蠻的外力。" },
-      { name:"隱士",   symbol:"🕯️", desc:"獨自尋求智慧，在靜默中找到答案。" },
-      { name:"命運之輪", symbol:"☸️", desc:"循環不息，命運的轉折即將到來。" },
-      { name:"正義",   symbol:"⚖️", desc:"因果平衡，公正的裁決將被揭示。" },
-      { name:"倒吊人", symbol:"🌊", desc:"放下執著，從不同角度看待問題。" },
-      { name:"死神",   symbol:"🥀", desc:"轉化與結束，為新生命清出空間。" },
-      { name:"節制",   symbol:"🌈", desc:"耐心與調和，在流動中尋找平衡。" },
-      { name:"惡魔",   symbol:"🔗", desc:"物質束縛，是時候打破自我的枷鎖。" },
-      { name:"高塔",   symbol:"⚡", desc:"突如其來的衝擊，舊結構的崩塌。" },
-      { name:"星星",   symbol:"⭐", desc:"希望的曙光，療癒與靈感的降臨。" },
-      { name:"月亮",   symbol:"🌕", desc:"幻象與恐懼，潛意識的深層呼喚。" },
-      { name:"太陽",   symbol:"☀️", desc:"喜悅與成功，光明照耀每個角落。" },
-      { name:"審判",   symbol:"🎺", desc:"覺醒與召喚，過去的反思帶來解脫。" },
-      { name:"世界",   symbol:"🌍", desc:"圓滿完成，整合一切後的豐盛境界。" }
-    ];
-    const suits = [
-      { name:"權杖", symbol:"🔥", desc:"熱情與行動力的具體展現。" },
-      { name:"聖杯", symbol:"💧", desc:"情感、直覺與深層關係的流動。" },
-      { name:"寶劍", symbol:"💨", desc:"思想、溝通與挑戰的銳利刀鋒。" },
-      { name:"錢幣", symbol:"🌱", desc:"物質、財富與務實行動的根基。" }
-    ];
-    const ranks = ["Ace","2","3","4","5","6","7","8","9","10","侍者","騎士","皇后","國王"];
+/* ══════════════════════════════════════
+   AUDIO  (Web Audio API — zero files)
+══════════════════════════════════════ */
+let audioCtx=null, soundOn=false;
+function getAC(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx;}
 
-    let fullDeck = [];
-    let selectedCards = [];
-    let flippedStatus = [];
-    let currentCount = 3;
-    const positions3 = ["過去", "現在", "未來"];
-    const positions5 = ["根基", "挑戰", "過去", "未來", "結果"];
-    const positions1 = ["今日指引"];
+function toggleSound(){
+  soundOn=!soundOn;
+  const btn=document.getElementById('soundBtn');
+  btn.textContent=soundOn?'🔊 音效':'🔇 音效';
+  btn.classList.toggle('on',soundOn);
+  if(soundOn){getAC();snd('chime');}
+}
 
-    function getPositions(n) {
-      if (n === 3) return positions3;
-      if (n === 5) return positions5;
-      return positions1;
-    }
+function snd(type){
+  if(!soundOn)return;
+  const ac=getAC();
+  if(ac.state==='suspended')ac.resume();
+  const t=ac.currentTime;
 
-    function initDeck() {
-      fullDeck = []; // 清空，避免重複累加
-      majors.forEach(m => fullDeck.push({ ...m, suit:"大阿爾克那" }));
-      suits.forEach(s => {
-        ranks.forEach(r => {
-          fullDeck.push({ 
-            name: r, 
-            suit: s.name, 
-            symbol: s.symbol, 
-            desc: s.desc 
-          });
-        });
-      });
-    }
+  if(type==='shuffle'){
+    // Whooshing noise bursts
+    for(let i=0;i<7;i++) setTimeout(()=>{
+      const buf=ac.createBuffer(1,ac.sampleRate*.07,ac.sampleRate);
+      const d=buf.getChannelData(0);
+      for(let j=0;j<d.length;j++)d[j]=(Math.random()*2-1)*Math.exp(-j/(d.length*.22));
+      const s=ac.createBufferSource();s.buffer=buf;
+      const f=ac.createBiquadFilter();f.type='bandpass';f.frequency.value=700+Math.random()*1400;f.Q.value=2.5;
+      const g=ac.createGain();g.gain.value=.16+Math.random()*.12;
+      s.connect(f);f.connect(g);g.connect(ac.destination);s.start();
+    },i*100);
+  }
 
-    // 主題切換
-    window.toggleTheme = function() {
-      const html = document.documentElement;
-      const isDark = html.getAttribute('data-theme') === 'dark';
-      html.setAttribute('data-theme', isDark ? 'light' : 'dark');
-      document.getElementById('pill-dark').classList.toggle('active', !isDark);
-      document.getElementById('pill-light').classList.toggle('active', isDark);
-    };
+  if(type==='riffle'){
+    for(let i=0;i<16;i++) setTimeout(()=>{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.type='triangle';
+      o.frequency.setValueAtTime(250+i*15+Math.random()*35,ac.currentTime);
+      o.frequency.exponentialRampToValueAtTime(70,ac.currentTime+.065);
+      g.gain.setValueAtTime(.2,ac.currentTime);g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+.07);
+      o.connect(g);g.connect(ac.destination);o.start();o.stop(ac.currentTime+.075);
+    },i*48+Math.random()*18);
+  }
 
-    // 選擇牌陣
-    window.selectSpread = function(el, count) {
-      document.querySelectorAll('.spread-chip').forEach(c => c.classList.remove('active'));
-      el.classList.add('active');
-      currentCount = count;
-      shuffleAndReset();
-    };
+  if(type==='whoosh'){
+    const buf=ac.createBuffer(1,ac.sampleRate*.42,ac.sampleRate);
+    const d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,1.6);
+    const s=ac.createBufferSource();s.buffer=buf;
+    const f=ac.createBiquadFilter();f.type='bandpass';
+    f.frequency.setValueAtTime(3200,t);f.frequency.exponentialRampToValueAtTime(220,t+.42);f.Q.value=2.8;
+    const g=ac.createGain();g.gain.setValueAtTime(.28,t);g.gain.exponentialRampToValueAtTime(.001,t+.42);
+    s.connect(f);f.connect(g);g.connect(ac.destination);s.start();
+  }
 
-    // 洗牌 + 重設 (含簡單動畫)
-    window.shuffleAndReset = function() {
-      // 防止重複點擊
-      const btn = document.getElementById('shuffleBtn');
-      if (btn.classList.contains('shuffling')) return;
-      btn.classList.add('shuffling');
+  if(type==='chime'){
+    [523.25,659.25,783.99,1046.5].forEach((f,i)=>{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+i*.075);g.gain.linearRampToValueAtTime(.17,t+i*.075+.025);g.gain.exponentialRampToValueAtTime(.001,t+i*.075+1.3);
+      o.connect(g);g.connect(ac.destination);o.start(t+i*.075);o.stop(t+i*.075+1.4);
+    });
+    const o2=ac.createOscillator(),g2=ac.createGain();
+    o2.type='sine';o2.frequency.value=2093;
+    g2.gain.setValueAtTime(0,t);g2.gain.linearRampToValueAtTime(.05,t+.05);g2.gain.exponentialRampToValueAtTime(.001,t+1.9);
+    o2.connect(g2);g2.connect(ac.destination);o2.start(t);o2.stop(t+2);
+  }
 
-      // 顯示洗牌動畫元素
-      const backdrop = document.getElementById('shuffleBackdrop');
-      const status = document.getElementById('shuffleStatus');
-      backdrop.classList.add('active');
-      status.classList.add('visible');
+  if(type==='flip'){
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type='sine';o.frequency.setValueAtTime(480,t);o.frequency.exponentialRampToValueAtTime(210,t+.14);
+    g.gain.setValueAtTime(.28,t);g.gain.exponentialRampToValueAtTime(.001,t+.2);
+    o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.22);
+    [900,1380].forEach((f,i)=>{
+      const o2=ac.createOscillator(),g2=ac.createGain();
+      o2.type='sine';o2.frequency.value=f;
+      g2.gain.setValueAtTime(.07,t+.025+i*.015);g2.gain.exponentialRampToValueAtTime(.001,t+.4+i*.1);
+      o2.connect(g2);g2.connect(ac.destination);o2.start(t+.025+i*.015);o2.stop(t+.5);
+    });
+  }
 
-      // 延遲執行真正的洗牌，讓動畫出現
-      setTimeout(() => {
-        // 重新建立牌組
-        initDeck();
-        // 隨機選牌 + 隨機正逆位
-        const shuffled = [...fullDeck].sort(() => Math.random() - 0.5);
-        selectedCards = shuffled.slice(0, currentCount).map(c => ({ 
-          ...c, 
-          isReversed: Math.random() > 0.55 
-        }));
-        flippedStatus = Array(currentCount).fill(false);
+  if(type==='reveal'){
+    [261.63,329.63,392,523.25,659.25,1046.5].forEach((f,i)=>{
+      const o=ac.createOscillator(),g=ac.createGain();
+      o.type='sine';o.frequency.value=f;
+      g.gain.setValueAtTime(0,t+i*.068);g.gain.linearRampToValueAtTime(.18,t+i*.068+.04);g.gain.exponentialRampToValueAtTime(.001,t+i*.068+.55);
+      o.connect(g);g.connect(ac.destination);o.start(t+i*.068);o.stop(t+i*.068+.6);
+    });
+  }
 
-        // 重繪版面
-        buildSpread();
-        updateDots();
+  if(type==='land'){
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type='sine';o.frequency.setValueAtTime(110,t);o.frequency.exponentialRampToValueAtTime(55,t+.11);
+    g.gain.setValueAtTime(.32,t);g.gain.exponentialRampToValueAtTime(.001,t+.15);
+    o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.17);
+  }
+}
 
-        // 隱藏結果面板
-        document.getElementById('resultPanel').classList.remove('visible');
-        document.getElementById('tapHint').style.display = 'flex';
-
-        // 隱藏洗牌動畫
-        backdrop.classList.remove('active');
-        status.classList.remove('visible');
-        btn.classList.remove('shuffling');
-
-        // 觸發展牌動畫 (為每個slot加入deal-in)
-        setTimeout(() => {
-          document.querySelectorAll('.spread-slot').forEach(slot => {
-            slot.classList.add('deal-in');
-          });
-        }, 20);
-      }, 600); // 動畫持續時間
-    };
-
-    // 建立牌陣DOM
-    function buildSpread() {
-      const container = document.getElementById('spread');
-      const positions = getPositions(currentCount);
-      container.innerHTML = '';
-      for (let i = 0; i < currentCount; i++) {
-        const slot = document.createElement('div');
-        slot.className = 'spread-slot';
-        // 為每個卡片的 front content 設定獨立 id
-        slot.innerHTML = `
-          <div class="slot-label-wrap">
-            <div class="slot-num">${i+1}</div>
-            <div class="slot-label">${positions[i]}</div>
-          </div>
-          <div class="tarot-card" onclick="flip(this, ${i})" id="card-${i}">
-            <div class="card-inner" id="inner-${i}">
-              <div class="card-back">
-                <div class="back-design">
-                  <div class="back-star">✦</div>
-                </div>
-              </div>
-              <div class="card-front">
-                <div class="card-front-content" id="content-${i}"></div>
-              </div>
-            </div>
-          </div>`;
-        container.appendChild(slot);
-      }
-    }
-
-    // 翻牌函數 (全域)
-    window.flip = function(el, index) {
-      if (flippedStatus[index]) return; // 已翻開則忽略
-      const data = selectedCards[index];
-      const content = document.getElementById(`content-${index}`);
-      if (!content) return;
-
-      // 組合顯示名稱
-      const displayName = data.suit === '大阿爾克那' 
-        ? data.name 
-        : `${data.suit} ${data.name}`;
-
-      // 填充正面內容
-      content.innerHTML = `
-        <div class="card-header">
-          <span class="card-num-badge">${index+1}/${currentCount}</span>
-          <span class="card-orientation ${data.isReversed ? 'reversed' : 'upright'}">${data.isReversed ? '逆位' : '正位'}</span>
-        </div>
-        <div class="card-art-area">
-          <div class="card-symbol">${data.symbol || '✦'}</div>
-        </div>
-        <div class="card-divider"></div>
-        <div class="card-name">${displayName}</div>
-        <div class="card-suit-tag">${data.suit}</div>
-        <div class="card-desc-text">${data.desc}</div>
-      `;
-
-      // 處理正逆位類別
-      if (data.isReversed) {
-        el.classList.add('is-reversed');
-      } else {
-        el.classList.remove('is-reversed');
-      }
-      el.classList.add('is-flipped');
-      flippedStatus[index] = true;
-
-      updateDots();
-
-      // 如果全部翻開，顯示解讀
-      if (flippedStatus.every(Boolean)) {
-        showResult();
-      }
-    };
-
-    // 全部翻開
-    window.revealAll = function() {
-      for (let i = 0; i < currentCount; i++) {
-        if (!flippedStatus[i]) {
-          const el = document.getElementById(`card-${i}`);
-          if (el) flip(el, i);
-        }
-      }
-    };
-
-    // 更新進度點點
-    function updateDots() {
-      const dotsEl = document.getElementById('progressDots');
-      dotsEl.innerHTML = '';
-      flippedStatus.forEach(done => {
-        const dot = document.createElement('div');
-        dot.className = 'dot' + (done ? ' done' : '');
-        dotsEl.appendChild(dot);
-      });
-      if (flippedStatus.every(Boolean)) {
-        document.getElementById('tapHint').style.display = 'none';
-      }
-    }
-
-    // 顯示結果面板
-    function showResult() {
-      const panel = document.getElementById('resultPanel');
-      const cards = document.getElementById('resultCards');
-      const positions = getPositions(currentCount);
-      // 簡易 badge 循環用
-      const badgeMap = { 0:'badge-past', 1:'badge-now', 2:'badge-future', 3:'badge-past', 4:'badge-now' };
-      cards.innerHTML = '';
-      selectedCards.forEach((c, i) => {
-        const displayName = c.suit === '大阿爾克那' ? c.name : `${c.suit} ${c.name}`;
-        cards.innerHTML += `
-          <div class="result-row">
-            <div class="result-badge ${badgeMap[i] || 'badge-past'}">${c.symbol || '✦'}</div>
-            <div class="result-info">
-              <div class="result-position">${positions[i]}</div>
-              <div class="result-card-name">${displayName}
-                <span class="result-card-pos ${c.isReversed ? 'rev' : 'up'}">${c.isReversed ? '逆位' : '正位'}</span>
-              </div>
-              <div class="result-meaning">${c.desc}</div>
-            </div>
-          </div>`;
-      });
-      panel.classList.add('visible');
-      setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 200);
-    }
-
-    // 初始化主題外觀
-    document.getElementById('pill-dark').classList.add('active');
-    document.getElementById('pill-light').classList.remove('active');
-
-    // 啟動：第一次洗牌
-    shuffleAndReset();
+/* ══════════════════════════════════════
+   STARFIELD
+══════════════════════════════════════ */
+(()=>{
+  const c=document.getElementById('starCanvas');
+  const ctx=c.getContext('2d');
+  const resize=()=>{c.width=window.innerWidth;c.height=window.innerHeight;};
+  resize();window.addEventListener('resize',resize);
+  const stars=Array.from({length:200},()=>({
+    x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,
+    r:.4+Math.random()*1.5,a:Math.random(),
+    da:(.003+Math.random()*.007)*(Math.random()>.5?1:-1),
+    vx:(Math.random()-.5)*.045,vy:(Math.random()-.5)*.045
+  }));
+  (function loop(){
+    ctx.clearRect(0,0,c.width,c.height);
+    const dk=document.documentElement.getAttribute('data-theme')==='dark';
+    stars.forEach(s=>{
+      s.a+=s.da;if(s.a<=0||s.a>=1)s.da*=-1;
+      s.x=(s.x+s.vx+c.width)%c.width;s.y=(s.y+s.vy+c.height)%c.height;
+      ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle=dk?`rgba(255,255,220,${s.a*.72})`:`rgba(100,80,20,${s.a*.22})`;
+      ctx.fill();
+    });
+    requestAnimationFrame(loop);
   })();
+})();
+
+/* ══════════════════════════════════════
+   VFX CANVAS
+══════════════════════════════════════ */
+const vc=document.getElementById('vfxCanvas');
+const vx=vc.getContext('2d');
+const vResize=()=>{vc.width=window.innerWidth;vc.height=window.innerHeight;};
+vResize();window.addEventListener('resize',vResize);
+
+const VP=[],VR=[];let vRunning=false;
+
+function addBurst(x,y,n=22,type='default'){
+  const P=type==='gold'?['#e8c96a','#ffd700','#fffacd','#b8962a','#fff8e1']:
+           type==='magic'?['#9b7de8','#6dc0f5','#f08080','#e8c96a','#fff']:
+           ['#e8c96a','#9b7de8','#6dc0f5','#f08080','#fff'];
+  for(let i=0;i<n;i++){
+    const a=(Math.PI*2*i/n)+Math.random()*.45;
+    const sp=55+Math.random()*150;
+    VP.push({x,y,vx:Math.cos(a)*sp*.017,vy:Math.sin(a)*sp*.017-2.2,ax:0,ay:.2,
+      r:2+Math.random()*4.5,color:P[Math.floor(Math.random()*P.length)],
+      alpha:1,life:1,decay:.011+Math.random()*.018,shape:Math.random()>.55?'star':'circle'});
+  }
+  VR.push({x,y,r:0,maxR:70+Math.random()*70,alpha:1,color:P[0]});
+}
+
+function addTrail(x,y){
+  for(let i=0;i<5;i++) VP.push({
+    x:x+(Math.random()-.5)*22,y:y+(Math.random()-.5)*22,
+    vx:(Math.random()-.5)*.6,vy:-Math.random()*.9,ax:0,ay:-.025,
+    r:1.5+Math.random()*2.5,color:'#e8c96a',alpha:.85,life:1,decay:.028+Math.random()*.03,shape:'circle'
+  });
+}
+
+function drawStar5(ctx,x,y,r,col,al){
+  ctx.save();ctx.globalAlpha=al;ctx.fillStyle=col;ctx.beginPath();
+  for(let i=0;i<5;i++){const a=Math.PI/2+i*Math.PI*.4,a2=a+Math.PI*.2;
+    i===0?ctx.moveTo(x+Math.cos(a)*r,y+Math.sin(a)*r):ctx.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);
+    ctx.lineTo(x+Math.cos(a2)*r*.42,y+Math.sin(a2)*r*.42);}
+  ctx.closePath();ctx.fill();ctx.restore();
+}
+
+function vfxLoop(){
+  vx.clearRect(0,0,vc.width,vc.height);
+  for(let i=VR.length-1;i>=0;i--){
+    const r=VR[i];r.r+=3.2;r.alpha=Math.max(0,1-r.r/r.maxR);
+    if(r.alpha<=0){VR.splice(i,1);continue;}
+    vx.beginPath();vx.arc(r.x,r.y,r.r,0,Math.PI*2);
+    vx.strokeStyle=r.color;vx.globalAlpha=r.alpha*.55;vx.lineWidth=1.8;vx.stroke();vx.globalAlpha=1;
+  }
+  for(let i=VP.length-1;i>=0;i--){
+    const p=VP[i];p.vx+=p.ax;p.vy+=p.ay;p.x+=p.vx;p.y+=p.vy;p.alpha-=p.decay;p.life=p.alpha;
+    if(p.life<=0){VP.splice(i,1);continue;}
+    if(p.shape==='star')drawStar5(vx,p.x,p.y,p.r,p.color,p.alpha);
+    else{vx.beginPath();vx.arc(p.x,p.y,p.r,0,Math.PI*2);vx.fillStyle=p.color;vx.globalAlpha=p.alpha;vx.fill();vx.globalAlpha=1;}
+  }
+  if(VP.length>0||VR.length>0)requestAnimationFrame(vfxLoop);else vRunning=false;
+}
+
+function triggerVFX(x,y,n,type){
+  addBurst(x,y,n,type);
+  if(!vRunning){vRunning=true;vfxLoop();}
+}
+
+function screenFlash(color='rgba(232,201,106,.45)'){
+  const el=document.getElementById('screenFlash');
+  el.style.background=`radial-gradient(ellipse at center,${color},transparent 70%)`;
+  el.style.opacity='1';
+  setTimeout(()=>{el.style.opacity='0';},130);
+}
+
+const RUNES=['ᚠ','ᚢ','ᚦ','ᚨ','ᚱ','ᚲ','ᚷ','ᚹ','ᚺ','ᚾ','ᛁ','ᛃ','ᛇ','ᛈ','ᛉ','ᛊ','ᛏ','ᛒ','ᛖ','ᛗ','ᛚ','ᛜ','ᛞ','ᛟ'];
+function spawnRune(x,y){
+  const el=document.createElement('div');
+  el.className='rune-stamp';
+  el.textContent=RUNES[Math.floor(Math.random()*RUNES.length)];
+  el.style.left=x+'px';el.style.top=y+'px';
+  el.style.color='var(--gold)';el.style.textShadow='0 0 20px rgba(232,201,106,.9)';
+  document.body.appendChild(el);
+  setTimeout(()=>el.remove(),1050);
+}
+
+/* ══════════════════════════════════════
+   DATA
+══════════════════════════════════════ */
+const majors=[
+  {name:"愚者",symbol:"🌟",desc:"新的開始，純真無畏地踏入未知。"},
+  {name:"魔術師",symbol:"🌙",desc:"意志與技能的完美融合，掌握命運。"},
+  {name:"女祭司",symbol:"🔮",desc:"直覺與神秘智慧，守護內在真相。"},
+  {name:"皇后",symbol:"🌿",desc:"豐盛、創造力與母性的溫柔力量。"},
+  {name:"皇帝",symbol:"⚡",desc:"權威與秩序，以意志建立穩固基礎。"},
+  {name:"教皇",symbol:"🕊️",desc:"精神指引，尋求傳統智慧的庇護。"},
+  {name:"戀人",symbol:"💫",desc:"重要抉擇，關於愛與價值觀的考驗。"},
+  {name:"戰車",symbol:"🏆",desc:"意志力驅動勝利，克服重重阻礙。"},
+  {name:"力量",symbol:"🦁",desc:"溫柔的內在力量勝過野蠻的外力。"},
+  {name:"隱士",symbol:"🕯️",desc:"獨自尋求智慧，在靜默中找到答案。"},
+  {name:"命運之輪",symbol:"☸️",desc:"循環不息，命運的轉折即將到來。"},
+  {name:"正義",symbol:"⚖️",desc:"因果平衡，公正的裁決將被揭示。"},
+  {name:"倒吊人",symbol:"🌊",desc:"放下執著，從不同角度看待問題。"},
+  {name:"死神",symbol:"🥀",desc:"轉化與結束，為新生命清出空間。"},
+  {name:"節制",symbol:"🌈",desc:"耐心與調和，在流動中尋找平衡。"},
+  {name:"惡魔",symbol:"🔗",desc:"物質束縛，是時候打破自我的枷鎖。"},
+  {name:"高塔",symbol:"🌩️",desc:"突如其來的衝擊，舊結構的崩塌。"},
+  {name:"星星",symbol:"⭐",desc:"希望的曙光，療癒與靈感的降臨。"},
+  {name:"月亮",symbol:"🌕",desc:"幻象與恐懼，潛意識的深層呼喚。"},
+  {name:"太陽",symbol:"☀️",desc:"喜悅與成功，光明照耀每個角落。"},
+  {name:"審判",symbol:"🎺",desc:"覺醒與召喚，過去的反思帶來解脫。"},
+  {name:"世界",symbol:"🌍",desc:"圓滿完成，整合一切後的豐盛境界。"}
+];
+const suits=[
+  {name:"權杖",symbol:"🔥",desc:"熱情與行動力的具體展現。"},
+  {name:"聖杯",symbol:"💧",desc:"情感、直覺與深層關係的流動。"},
+  {name:"寶劍",symbol:"💨",desc:"思想、溝通與挑戰的銳利刀鋒。"},
+  {name:"錢幣",symbol:"🌱",desc:"物質、財富與務實行動的根基。"}
+];
+const ranks=["Ace","2","3","4","5","6","7","8","9","10","侍者","騎士","皇后","國王"];
+const SYM=["✦","✧","⊕","◈","⟡","⬡","⬟","✺","❋","⍟"];
+
+let fullDeck=[],selectedCards=[],flippedStatus=[],currentCount=3,isAnimating=false;
+const P3=["過去","現在","未來"],P5=["根基","挑戰","過去","未來","結果"],P1=["今日指引"];
+function getPos(n){return n===3?P3:n===5?P5:P1;}
+
+function initDeck(){
+  fullDeck=[...majors.map(m=>({...m,suit:"大阿爾克那"}))];
+  suits.forEach(s=>ranks.forEach(r=>fullDeck.push({name:r,suit:s.name,symbol:s.symbol,desc:s.desc})));
+}
+
+/* ══════════════════════════════════════
+   SHUFFLE ANIMATION
+══════════════════════════════════════ */
+function shuffleAndReset(){
+  if(isAnimating)return;
+  isAnimating=true;
+  document.querySelector('.btn-primary').classList.add('shuffling');
+  initDeck();
+  const sh=[...fullDeck].sort(()=>Math.random()-.5);
+  selectedCards=sh.slice(0,currentCount).map(c=>({...c,isReversed:Math.random()>.55}));
+  flippedStatus=Array(currentCount).fill(false);
+  document.getElementById('resultPanel').classList.remove('visible');
+  document.getElementById('tapHint').style.display='flex';
+  document.querySelectorAll('.spread-slot').forEach(s=>{s.style.transition='opacity .25s,transform .25s';s.style.opacity='0';s.style.transform='scale(.85)';});
+  setTimeout(()=>phase_gather(),300);
+}
+
+function phase_gather(){
+  setStatus("集合牌組...");
+  showBackdrop(true);
+  snd('shuffle');
+  screenFlash('rgba(155,125,232,.38)');
+  const cx=window.innerWidth/2,cy=window.innerHeight/2;
+  const CW=Math.min(108,window.innerWidth*.155),CH=CW*1.75;
+  const N=9,cards=[];
+  for(let i=0;i<N;i++){
+    const fc=document.createElement('div');
+    fc.className='fly-card';
+    fc.style.cssText=`width:${CW}px;height:${CH}px;left:${cx-CW/2}px;top:${cy-CH/2}px;opacity:0;transform:translate(${(Math.random()-.5)*window.innerWidth*.86}px,${(Math.random()-.5)*window.innerHeight*.86}px) rotate(${(Math.random()-.5)*340}deg) scale(.42);transition:none`;
+    fc.innerHTML=SYM[i%SYM.length];
+    document.body.appendChild(fc);cards.push(fc);
+  }
+  cards.forEach((fc,i)=>{
+    setTimeout(()=>{
+      fc.style.transition='transform .58s cubic-bezier(.4,0,.2,1),opacity .3s';
+      fc.style.opacity='1';
+      fc.style.transform=`translate(${(i-N/2)*3.5}px,${-i*2.5}px) rotate(${(i-N/2)*5}deg)`;
+      const r=fc.getBoundingClientRect();addTrail(r.left+CW/2,r.top+CH/2);
+      if(!vRunning){vRunning=true;vfxLoop();}
+    },i*65);
+  });
+  setTimeout(()=>phase_riffle(cards,cx,cy,CW,CH,3,()=>setTimeout(()=>phase_fan(cards,cx,cy,CW,CH),200)),N*65+700);
+}
+
+function phase_riffle(cards,cx,cy,cw,ch,rounds,done){
+  setStatus("洗牌中...");
+  const half=Math.floor(cards.length/2);
+  let r=0;
+  function round(){
+    if(r>=rounds){done();return;}
+    snd('riffle');
+    cards.forEach((fc,i)=>{
+      const side=i<half?-1:1,off=i<half?i:i-half;
+      fc.style.transition='transform .2s cubic-bezier(.4,0,.2,1)';
+      fc.style.transform=`translate(${side*(cw*.62+off*2.5)}px,${off*2}px) rotate(${side*(10+off*1.5)}deg)`;
+    });
+    setTimeout(()=>{
+      cards.forEach((fc,i)=>setTimeout(()=>{
+        fc.style.transition='transform .16s ease-out';
+        fc.style.transform=`translate(${(i-cards.length/2)*2.5}px,${-i*1.5}px) rotate(${(i-cards.length/2)*3}deg)`;
+      },i*16));
+      r++;setTimeout(round,cards.length*16+260);
+    },290);
+  }
+  round();
+}
+
+function phase_fan(cards,cx,cy,cw,ch){
+  setStatus("命運選牌...");
+  snd('whoosh');
+  screenFlash('rgba(109,192,245,.32)');
+  const total=cards.length,arcR=ch*.88;
+  cards.forEach((fc,i)=>{
+    const angle=((i/(total-1))-.5)*108;
+    const rad=angle*Math.PI/180;
+    const tx=Math.sin(rad)*arcR,ty=-Math.abs(Math.cos(rad))*arcR*.3+arcR*.22;
+    setTimeout(()=>{fc.style.transition='transform .44s cubic-bezier(.34,1.2,.64,1)';fc.style.transform=`translate(${tx}px,${ty}px) rotate(${angle*.65}deg)`;},i*33);
+  });
+
+  setTimeout(()=>{
+    setStatus("牌已選定 ✦");
+    snd('chime');
+    screenFlash('rgba(232,201,106,.42)');
+    const pickIdx=[];
+    while(pickIdx.length<currentCount){const i=Math.floor(Math.random()*cards.length);if(!pickIdx.includes(i))pickIdx.push(i);}
+    pickIdx.forEach((pi,order)=>{
+      setTimeout(()=>{
+        const fc=cards[pi];
+        const fr=fc.getBoundingClientRect();
+        fc.style.transition='transform .4s cubic-bezier(.34,1.56,.64,1),box-shadow .3s,border-color .3s';
+        fc.style.boxShadow='0 0 48px rgba(232,201,106,.95),0 0 100px rgba(232,201,106,.45)';
+        fc.style.borderColor='rgba(232,201,106,.95)';
+        fc.style.transform=fc.style.transform+' translateY(-34px) scale(1.12)';
+        triggerVFX(fr.left+cw/2,fr.top+ch/2,20,'gold');
+        spawnRune(fr.left+cw/2,fr.top+ch/2-55);
+        snd('flip');
+      },order*180);
+    });
+    setTimeout(()=>phase_deal(cards,pickIdx,cw,ch),pickIdx.length*180+620);
+  },total*33+660);
+}
+
+function phase_deal(cards,pickIdx,cw,ch){
+  setStatus("發牌中...");
+  buildSpread(true);updateDots();
+  cards.forEach((fc,i)=>{
+    if(!pickIdx.includes(i)) setTimeout(()=>{
+      fc.style.transition='transform .3s ease-in,opacity .28s';
+      fc.style.opacity='0';fc.style.transform=fc.style.transform+' scale(.5)';
+    },Math.random()*160);
+  });
+  setTimeout(()=>{
+    const slots=document.querySelectorAll('.tarot-card');
+    pickIdx.forEach((pi,order)=>{
+      const fc=cards[pi];
+      setTimeout(()=>{
+        if(!slots[order])return;
+        const rect=slots[order].getBoundingClientRect();
+        const tx=rect.left+rect.width/2,ty=rect.top+rect.height/2;
+        const fr=fc.getBoundingClientRect();
+        const dx=tx-fr.left-cw/2,dy=ty-fr.top-ch/2;
+        snd('whoosh');
+        fc.style.transition='transform .54s cubic-bezier(.4,0,.2,1),opacity .2s,box-shadow .25s';
+        fc.style.boxShadow='0 4px 20px rgba(0,0,0,.3)';
+        fc.style.transform=`translate(${dx}px,${dy}px) rotate(0deg) scale(${rect.width/cw})`;
+        setTimeout(()=>{
+          fc.style.opacity='0';
+          const slotEl=slots[order]?.closest('.spread-slot');
+          if(slotEl){slotEl.style.opacity='1';slotEl.classList.add('deal-in');}
+          snd('land');
+          triggerVFX(tx,ty,16,'magic');
+          spawnRune(tx,ty-10);
+          screenFlash('rgba(155,125,232,.28)');
+        },500);
+      },order*245);
+    });
+    const total=pickIdx.length*245+780;
+    setTimeout(()=>{
+      cards.forEach(fc=>fc.remove());
+      showBackdrop(false);setStatus("");
+      isAnimating=false;
+      document.querySelector('.btn-primary').classList.remove('shuffling');
+      snd('reveal');
+      triggerVFX(window.innerWidth/2,window.innerHeight*.38,32,'gold');
+      screenFlash('rgba(232,201,106,.52)');
+    },total);
+  },320);
+}
+
+/* ══════════════════════════════════════
+   HELPERS
+══════════════════════════════════════ */
+function showBackdrop(on){document.getElementById('shuffleBackdrop').classList.toggle('active',on);}
+function setStatus(t){const el=document.getElementById('shuffleStatus');el.textContent=t;el.classList.toggle('visible',!!t);}
+
+/* ══════════════════════════════════════
+   SPREAD / FLIP
+══════════════════════════════════════ */
+function selectSpread(el,count){
+  document.querySelectorAll('.spread-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');currentCount=count;shuffleAndReset();
+}
+
+function buildSpread(hidden=false){
+  const container=document.getElementById('spread'),positions=getPos(currentCount);
+  container.innerHTML='';
+  for(let i=0;i<currentCount;i++){
+    const slot=document.createElement('div');slot.className='spread-slot';
+    if(hidden)slot.style.opacity='0';
+    slot.innerHTML=`<div class="slot-label-wrap"><div class="slot-num">${i+1}</div><div class="slot-label">${positions[i]}</div></div>
+    <div class="tarot-card" onclick="flip(this,${i})" id="card-${i}">
+      <div class="card-inner" id="inner-${i}">
+        <div class="card-back"><div class="back-design"><div class="back-star">✦</div></div></div>
+        <div class="card-front"><div class="card-front-content" id="content-${i}"></div></div>
+      </div></div>`;
+    container.appendChild(slot);
+  }
+}
+
+function flip(el,index){
+  if(flippedStatus[index]||isAnimating)return;
+  const data=selectedCards[index];
+  const content=document.getElementById(`content-${index}`);
+  const dn=data.suit==='大阿爾克那'?data.name:`${data.suit}${data.name}`;
+  content.innerHTML=`<div class="card-header"><span class="card-num-badge">${index+1}/${currentCount}</span>
+    <span class="card-orientation ${data.isReversed?'reversed':'upright'}">${data.isReversed?'逆位':'正位'}</span></div>
+    <div class="card-art-area"><div class="card-symbol">${data.symbol||'✦'}</div></div>
+    <div class="card-divider"></div><div class="card-name">${dn}</div>
+    <div class="card-suit-tag">${data.suit}</div><div class="card-desc-text">${data.desc}</div>`;
+  if(data.isReversed)el.classList.add('is-reversed');
+  el.classList.add('is-flipped','just-flipped');
+  setTimeout(()=>el.classList.remove('just-flipped'),900);
+  flippedStatus[index]=true;
+  const rect=el.getBoundingClientRect();
+  const cx=rect.left+rect.width/2,cy=rect.top+rect.height/2;
+  triggerVFX(cx,cy,24,data.isReversed?'magic':'gold');
+  spawnRune(cx,cy-44);
+  screenFlash(data.isReversed?'rgba(240,128,128,.32)':'rgba(232,201,106,.38)');
+  snd('flip');
+  updateDots();
+  if(flippedStatus.every(Boolean)){
+    setTimeout(()=>{
+      snd('reveal');
+      triggerVFX(window.innerWidth/2,window.innerHeight*.33,38,'gold');
+      screenFlash('rgba(232,201,106,.58)');
+      // Multiple rune burst
+      for(let i=0;i<5;i++) setTimeout(()=>spawnRune(
+        100+Math.random()*(window.innerWidth-200),
+        80+Math.random()*(window.innerHeight*.5)
+      ),i*120);
+      showResult();
+    },420);
+  }
+}
+
+function revealAll(){
+  if(isAnimating)return;
+  for(let i=0;i<currentCount;i++) if(!flippedStatus[i]) setTimeout(()=>{
+    const el=document.getElementById(`card-${i}`);if(el)flip(el,i);
+  },i*370);
+}
+
+function updateDots(){
+  const dotsEl=document.getElementById('progressDots');
+  dotsEl.innerHTML='';
+  flippedStatus.forEach(done=>{const d=document.createElement('div');d.className='dot'+(done?' done':'');dotsEl.appendChild(d);});
+  if(flippedStatus.every(Boolean))document.getElementById('tapHint').style.display='none';
+}
+
+function showResult(){
+  const panel=document.getElementById('resultPanel'),cards=document.getElementById('resultCards');
+  const positions=getPos(currentCount);
+  const bc=['badge-past','badge-now','badge-future','badge-past','badge-now'];
+  cards.innerHTML='';
+  selectedCards.forEach((c,i)=>{
+    const dn=c.suit==='大阿爾克那'?c.name:`${c.suit}${c.name}`;
+    cards.innerHTML+=`<div class="result-row">
+      <div class="result-badge ${bc[i]||'badge-past'}">${c.symbol||'✦'}</div>
+      <div class="result-info">
+        <div class="result-position">${positions[i]}</div>
+        <div class="result-card-name">${dn}<span class="result-card-pos ${c.isReversed?'rev':'up'}">${c.isReversed?'逆位':'正位'}</span></div>
+        <div class="result-meaning">${c.desc}</div>
+      </div></div>`;
+  });
+  panel.classList.add('visible');
+  setTimeout(()=>panel.scrollIntoView({behavior:'smooth',block:'nearest'}),200);
+}
+
+/* ══════════════════════════════════════
+   THEME
+══════════════════════════════════════ */
+function toggleTheme(){
+  const html=document.documentElement;
+  const isDark=html.getAttribute('data-theme')==='dark';
+  html.setAttribute('data-theme',isDark?'light':'dark');
+  document.getElementById('pill-dark').classList.toggle('active',!isDark);
+  document.getElementById('pill-light').classList.toggle('active',isDark);
+  snd('chime');
+  triggerVFX(window.innerWidth/2,50,14,'magic');
+}
+
+/* ══════════════════════════════════════
+   INIT
+══════════════════════════════════════ */
+document.getElementById('pill-dark').classList.add('active');
+initDeck();
+const s0=[...fullDeck].sort(()=>Math.random()-.5);
+selectedCards=s0.slice(0,currentCount).map(c=>({...c,isReversed:Math.random()>.55}));
+flippedStatus=Array(currentCount).fill(false);
+buildSpread(false);
+setTimeout(()=>{
+  document.querySelectorAll('.spread-slot').forEach((s,i)=>{
+    s.style.opacity='0';
+    setTimeout(()=>{s.style.opacity='1';s.classList.add('deal-in');},i*185+200);
+  });
+},100);
+updateDots();
 </script>
 </body>
 </html>
